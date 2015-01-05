@@ -1,0 +1,13 @@
+{
+	"author": "Mike Wilcox @clubajax",
+	"name": "declare",
+	"main":"declare.js",
+	"description": "A library for handling prototypal inheritance.",
+	"version": "0.0.1",
+	"license": "Unlicense",
+    "readmeFilename": "README.md",
+	"repository": {
+        "type": "git",
+        "url": "git://github.com/clubajax/declare.git"
+    }
+}
