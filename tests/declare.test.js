@@ -38,6 +38,7 @@ define([], function () {
 			var Cnst = declare({
 				constructor: function(){}	
 			});
+			//console.log('Cnst', Cnst);
 			expect(Cnst).to.be.a('function');
 		},
 		
@@ -160,26 +161,88 @@ define([], function () {
 				Cnst = declare(o1,o2,o3,o4),
 				c;
 				
-				setTimeout(function(){ c = new Cnst();
+				c = new Cnst();
 				console.dir(Cnst.prototype);
-				console.dir(c); }, 100);
+				console.dir(c);
 				
 			//expect(c.result).to.equal(true);
 		},
 		
-		'constructor should work after last one': function(){
+		'constructor should work after last test': function(){
 			var
 				Cnst = declare({
 					declaredClass: 'Cool',
 					cool: false,
 					constructor: function(){
-						this.cool = true;	
+						this.cool = true;
 					}
 				}),
 				c = new Cnst();
+				
 				console.dir(Cnst.prototype);
 				console.dir(c);
 			//expect(c.result).to.equal(true);
 		},
+		
+		'should handle null arguments': function(){
+			var
+				o1 = {
+					result: false,
+					otherbarResult: false,
+					constructor: function(){
+						this.foo();	
+					},
+					foo: function(){
+						this.result = true;
+					},
+					otherbar: function(){
+						this.otherbar = true;
+					}
+				},
+				o2 = {
+					barResult: false,
+					constructor: function(){
+						this.bar();
+						this.otherbar();
+					},
+					bar: function(){
+						this.barResult = true;
+					}
+				},
+				Cnst = declare(null, o1,o2),
+				c = new Cnst();
+				console.dir(c);
+			expect(c.result).to.equal(true);
+		},
+		
+		'should handle prototypal method chaining': function(){
+			
+			var
+				o1 = {
+					declaredClass:'O1',
+					constructor: function(){
+							console.log('O1 Object.getPrototypeOf', Object.getPrototypeOf(this));	
+					},
+					foo: function(){
+						console.log('O1 foo');
+					}
+				},
+				o2 = {
+					declaredClass:'O2',
+					constructor: function(){
+						console.log('O2 Object.getPrototypeOf', Object.getPrototypeOf(this));	
+					},
+					foo: function(){
+						//console.log('O2 foo', this);
+						//console.log(this.chain(this, 'foo'));
+					}
+				},
+				Cnst = declare(o1,o2),
+				c = new Cnst();
+				console.log('C', c);
+				c.foo();
+				
+		
+		}
 	});
 });

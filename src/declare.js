@@ -1,8 +1,9 @@
 define([], function(){
 	
 	var
-		uids = {},
-		declareObject = {};
+		uids = {}
+		//,declareObject = {}
+		;
 	
 	function uid(type){
         if(!uids[type]){
@@ -23,10 +24,6 @@ define([], function(){
 		return a;
 	}
 	
-	function copy(proto){
-		return mix({}, proto);
-	}
-	
 	function flattenArrays(args){
 		var i, k, flat = [];
 		for(i = 0; i < args.length; i++){
@@ -39,6 +36,12 @@ define([], function(){
 			}
 		}
 		return flat;
+	}
+	
+	function addSuper(instance){
+		instance.chain = function(proto, methodName){
+			return Object.getPrototypeOf(proto)[methodName];
+		};
 	}
 	
 	function declare(){
@@ -57,17 +60,24 @@ define([], function(){
 		// separate constructors and prototypes
 		for(i = 0; i < args.length; i++){
 			arg = args[i];
-			if(typeof arg === 'function'){
-				protos.push(arg.prototype);
-				constrs.push(arg);
-			}
-			else{
-				if(arg.constructor){
-					constrs.push(arg.constructor);
-					delete arg.constructor;
-					protos.push(arg);
+			// dcl allows for null arguments
+			if(arg){
+				if(typeof arg === 'function'){
+					protos.push(arg.prototype);
+					constrs.push(arg);
+				}
+				else{
+					if(arg.constructor){
+						constrs.push(arg.constructor);
+						delete arg.constructor;
+						protos.push(arg);
+					}
 				}
 			}
+		}
+		
+		if(protos.length > 1){
+			addSuper(protos[protos.length-1]);
 		}
 		
 		
@@ -89,39 +99,53 @@ define([], function(){
 			}
 		}
 		
-		return (function(){
-			// This ceremony is a lot of bang for little buck.
-			// The intent is that the resulting constructor will have a name
-			// assigned that will show up in debuggers, like Chrome's Inspector.
-			var
-				str,
-				id = uid('declare'),
-				// The constructor name. Either the declaredClass from the last
-				// prototype-constructor, or a unique name
-				fname = iProto.declaredClass || id;
+		function Constructor(){
+			for(i = 0; i < constrs.length; i++){
+				constrs[i].apply(this, arguments);
+			}
+		}
 			
-			// TODO Wrap this in a global map __declare[]
-			
-			// new Function is used below, which only can see itself and the global scope
-			// Unique names are needed to prevent clashes with other declared classes
-			window['constrs' + id] = constrs;
-			window['proto' + id] = proto;
-			
-			// The stringified code that will be eval'd
-			str = 'var i, constrs = window["constrs' + id + '"], proto = window["proto' + id + '"]; ' +
-			
-			// The actual constructor (which loops through and calls the constructor chain)
-			'function '+fname+'(){'+
-				'for(i = 0; i < constrs.length; i++){'+
-				'	constrs[i].apply(this, arguments);'+
-				'}	'+
-			'};'+
-			fname+'.prototype = proto;' +
-			'return ' + fname + ';';
-			
-			return (new Function(str)());
-		}());
+		if(!declare.evalVariable){
+			Constructor.prototype = proto;
+			return Constructor;
+		}else{
+			console.log('EVAL');
+			return (function(){
+				// This ceremony is a lot of bang for little buck.
+				// The intent is that the resulting constructor will have a name
+				// assigned that will show up in debuggers, like Chrome's Inspector.
+				var
+					str,
+					id = uid('declare'),
+					// The constructor name. Either the declaredClass from the last
+					// prototype-constructor, or a unique name
+					fname = iProto.declaredClass || id;
+				
+				// TODO Wrap this in a global map __declare[]
+				
+				// new Function is used below, which only can see itself and the global scope
+				// Unique names are needed to prevent clashes with other declared classes
+				window['constrs' + id] = constrs;
+				window['proto' + id] = proto;
+				
+				// The stringified code that will be eval'd
+				str = 'var i, constrs = window["constrs' + id + '"], proto = window["proto' + id + '"]; ' +
+				
+				// The actual constructor (which loops through and calls the constructor chain)
+				'function '+fname+'(){'+
+					'for(i = 0; i < constrs.length; i++){'+
+					'	constrs[i].apply(this, arguments);'+
+					'}	'+
+				'};'+
+				fname+'.prototype = proto;' +
+				'return ' + fname + ';';
+				
+				return (new Function(str)());
+			}());
+		}
 	}
+	
+	declare.evalVariable = false;
 	
 	return declare;
 });

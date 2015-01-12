@@ -4,7 +4,9 @@
 
 `declare` is a library for handling prototypal inheritance.
 
-This is still under development, so docs are coming soon.
+This is still under development and being tested, so it should be considered a beta.
+
+Docs are coming soon.
 	
 ## License
 
