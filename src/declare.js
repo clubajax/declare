@@ -39,9 +39,13 @@ define([], function(){
 	}
 	
 	function addSuper(instance){
-		instance.chain = function(proto, methodName){
-			return Object.getPrototypeOf(proto)[methodName];
-		};
+		Object.create(instance, {
+			chain:{
+				value: function(proto, methodName){
+					return Object.getPrototypeOf(proto)[methodName];
+				}
+			}			
+		});
 	}
 	
 	function declare(){
