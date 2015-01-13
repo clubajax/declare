@@ -83,8 +83,6 @@ define([], function () {
 				Cnst = declare(o1,o2),
 				c = new Cnst();
 				
-				console.dir(c);
-				
 			expect(c.o1).to.equal(true);
 			expect(c.o2).to.equal(true);
 		},
@@ -116,7 +114,6 @@ define([], function () {
 				},
 				Cnst = declare(o1,o2),
 				c = new Cnst();
-				console.dir(c);
 			expect(c.result).to.equal(true);
 		},
 		
@@ -162,9 +159,6 @@ define([], function () {
 				c;
 				
 				c = new Cnst();
-				console.dir(Cnst.prototype);
-				console.dir(c);
-				
 			//expect(c.result).to.equal(true);
 		},
 		
@@ -178,9 +172,6 @@ define([], function () {
 					}
 				}),
 				c = new Cnst();
-				
-				console.dir(Cnst.prototype);
-				console.dir(c);
 			//expect(c.result).to.equal(true);
 		},
 		
@@ -211,37 +202,47 @@ define([], function () {
 				},
 				Cnst = declare(null, o1,o2),
 				c = new Cnst();
-				console.dir(c);
 			expect(c.result).to.equal(true);
 		},
 		
 		'should handle prototypal method chaining': function(){
 			
 			var
+				r1 = false,
+				r2 = false,
+				r3 = false,
 				o1 = {
-					declaredClass:'O1',
-					constructor: function(){
-							console.log('O1 Object.getPrototypeOf', Object.getPrototypeOf(this));	
-					},
+					id:'O1',
 					foo: function(){
-						console.log('O1 foo');
+						r1 = this.id;
 					}
 				},
 				o2 = {
-					declaredClass:'O2',
-					constructor: function(){
-						console.log('O2 Object.getPrototypeOf', Object.getPrototypeOf(this));	
-					},
+					id:'O2',
 					foo: function(){
-						//console.log('O2 foo', this);
-						//console.log(this.chain(this, 'foo'));
+						r2 = this.id;
+						this.getSuper().foo();
 					}
 				},
-				Cnst = declare(o1,o2),
+				o3 = {
+					id:'O3',
+					foo: function(){
+						r3 = this.id;
+						this.getSuper().foo();
+					}
+				},
+				Cnst = declare(o1,o2,o3),
 				c = new Cnst();
-				console.log('C', c);
 				c.foo();
 				
+				//console.log(' -> C', c);
+				//console.log('c.getSuper', c.getSuper());
+				//console.log('c.getSuper.getSuper', c.getSuper().getSuper());
+				//console.log('r', r1, r2, r3);
+				
+				expect(r1).to.equal(o1.id);
+				expect(r2).to.equal(o2.id);
+				expect(r3).to.equal(o3.id);
 		
 		}
 	});

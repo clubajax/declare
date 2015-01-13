@@ -31,22 +31,24 @@ define([], function(){
 				for(k = 0; k < args[i].length; k++){
 					flat.push(args[i][k]);
 				}
-			}else{
+			}
+			else if(args[i]){
+				// dcl allows for null arguments
 				flat.push(args[i]);
 			}
 		}
 		return flat;
 	}
 	
-	function addSuper(instance){
-		Object.create(instance, {
-			chain:{
-				value: function(proto, methodName){
-					return Object.getPrototypeOf(proto)[methodName];
-				}
-			}			
-		});
-	}
+	//function addSuper(instance){
+	//	Object.create(instance, {
+	//		chain:{
+	//			value: function(proto, methodName){
+	//				return Object.getPrototypeOf(proto)[methodName];
+	//			}
+	//		}			
+	//	});
+	//}
 	
 	function declare(){
 		// declare
@@ -59,30 +61,52 @@ define([], function(){
 			constrs = [],
 			i,
 			arg,
-			args = flattenArrays(arguments);
+			args = flattenArrays(arguments),
+			protoChain = [];
+		
+		function inherit(a, b, isLast){
+			var proto;
+			if(!b){
+				a.getSuper = function(o){
+					return null;
+				};
+				protoChain.push(a);
+				proto = Object.create(a);
+				return proto;
+			}
+			(function(){
+				var _super = protoChain[protoChain.length - 1];
+				b.getSuper = function(o){
+					return _super;
+				};
+			}());
+			
+			protoChain.push(b);
+			if(isLast){
+				return mix(a, b);
+			}
+			return Object.create(mix(a, b));
+		}
 		
 		// separate constructors and prototypes
 		for(i = 0; i < args.length; i++){
 			arg = args[i];
-			// dcl allows for null arguments
-			if(arg){
-				if(typeof arg === 'function'){
-					protos.push(arg.prototype);
-					constrs.push(arg);
-				}
-				else{
-					if(arg.constructor){
-						constrs.push(arg.constructor);
-						delete arg.constructor;
-						protos.push(arg);
-					}
+			if(typeof arg === 'function'){
+				protos.push(arg.prototype);
+				constrs.push(arg);
+			}
+			else{
+				if(arg.constructor){
+					constrs.push(arg.constructor);
+					delete arg.constructor;
+					protos.push(arg);
 				}
 			}
 		}
 		
-		if(protos.length > 1){
-			addSuper(protos[protos.length-1]);
-		}
+		//if(protos.length > 1){
+		//	addSuper(protos[protos.length-1]);
+		//}
 		
 		
 		// create prototype chain
@@ -90,16 +114,16 @@ define([], function(){
 			iProto = protos[i];
 			if(!proto){
 				// first prototype
-				proto = Object.create(iProto);
+				proto = inherit(iProto);
 			}
-			else if(i === protos.length - 1){
-				// last prototype, just mix in the properties because
-				// the result will be a prototype on the final constructor
-				mix(proto, iProto);
-			}
+			//else if(i === protos.length - 1){
+			//	// last prototype, just mix in the properties because
+			//	// the result will be a prototype on the final constructor
+			//	mix(proto, iProto);
+			//}
 			else{
 				// middle prototypes
-				proto = Object.create(mix(proto, iProto));
+				proto = inherit(proto, iProto, i === protos.length - 1);
 			}
 		}
 		
